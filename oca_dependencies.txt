@@ -1,7 +1,7 @@
 # list the OCA project dependencies, one per line
 # add a github url if you need a forked version
 partner-contact
-server-tools
+server-tools git@github.com:grindtildeath/server-tools.git 11.0-mig_configuration_helper
 stock-logistics-workflow
 webkit-tools
 web
