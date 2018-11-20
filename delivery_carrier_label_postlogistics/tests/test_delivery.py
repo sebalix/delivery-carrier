@@ -12,30 +12,33 @@ SINGLE_OPTION_TYPES = [
 
 class TestDelivery(common.SavepointCase):
 
-    def setUp(self):
-        super(TestDelivery, self).setUp()
-        self.service_group = self.env['postlogistics.service.group'].create({
+    @classmethod
+    def setUpClass(cls):
+        super(TestDelivery, cls).setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+        cls.service_group = cls.env['postlogistics.service.group'].create({
             'name': "TEST SERVICE GROUP",
             'group_extid': 45879089,    # Random
         })
-        self.carrier = self.env['delivery.carrier'].create({
+        cls.carrier = cls.env['delivery.carrier'].create({
             'name': "TEST CARRIER",
             'delivery_type': 'postlogistics',
-            'product_id': self.env.ref(
+            'product_id': cls.env.ref(
                 'delivery_carrier_label_postlogistics.'
                 'product_postlogistics_service').id,
-            'postlogistics_service_group_id': self.service_group.id,
+            'postlogistics_service_group_id': cls.service_group.id,
         })
-        self.carrier_option = self.create_carrier_option()
+        cls.carrier_option = cls.create_carrier_option()
 
-    def create_carrier_option(self, template=False, values=None):
+    @classmethod
+    def create_carrier_option(cls, template=False, values=None):
         vals = {
             'name': "OPTION",
             # 'postlogistics_type': 'basic',
         }
-        option_model = self.env['delivery.carrier.option']
+        option_model = cls.env['delivery.carrier.option']
         if template:
-            option_model = self.env['delivery.carrier.template.option']
+            option_model = cls.env['delivery.carrier.template.option']
             vals['name'] = "TEMPLATE OPTION"
         if values:
             vals.update(values)
@@ -91,9 +94,8 @@ class TestDelivery(common.SavepointCase):
         self.assertFalse(self.carrier.postlogistics_basic_service_ids)
 
     def test_carrier_allowed_tmpl_options_ids_1(self):
-        """Check allowed template options given that there is:
-            - no basic template option
-            - no available option configured on the carrier
+        """Check allowed template options when there is no basic template
+        option and no available option configured on the carrier.
         """
         services = self.env['delivery.carrier.template.option'].search(
             [('postlogistics_type', 'in', SINGLE_OPTION_TYPES)])
@@ -102,16 +104,15 @@ class TestDelivery(common.SavepointCase):
             services)
 
     def test_carrier_allowed_tmpl_options_ids_2(self):
-        """Check allowed template options given that there is:
-            - no basic template option
-            - one mandatory available option configured on the carrier
+        """Check allowed template options when there is no basic template
+        option and one mandatory available option configured on the carrier.
         """
         self.carrier.available_option_ids += self.create_carrier_option(
             values={'postlogistics_type': 'resolution',
                     'mandatory': True,
                     'carrier_id': self.carrier.id})
-        single_option_types = SINGLE_OPTION_TYPES[:]
-        single_option_types.remove('resolution')
+        single_option_types = [x for x in SINGLE_OPTION_TYPES
+                               if x != 'resolution']
         services = self.env['delivery.carrier.template.option'].search(
             [('postlogistics_type', 'in', single_option_types)])
         self.assertEqual(
