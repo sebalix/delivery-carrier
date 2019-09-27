@@ -18,4 +18,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from . import test_generate_labels
+from . import test_generate_labels_pdf
+from . import test_generate_labels_zpl
